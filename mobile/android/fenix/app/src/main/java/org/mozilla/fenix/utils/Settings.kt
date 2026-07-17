@@ -79,6 +79,22 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 private const val AUTOPLAY_USER_SETTING = "AUTOPLAY_USER_SETTING"
 private const val MAX_ANIMATION_FOREGROUND = 5
 
+// Default URL rendered in the Homepage Crossword Widget when no override is set in secret settings.
+private const val CROSSWORD_WIDGET_DEFAULT_URL =
+    "https://prod-games-particle.merino.prod.webservices.mozgcp.net/index.html"
+
+// Default width-to-height ratio of the Homepage Crossword Widget card when no override is set.
+private const val CROSSWORD_WIDGET_DEFAULT_ASPECT_RATIO = 300f / 250f
+
+// Parses a "WxH" (or "W:H") aspect-ratio override into a width/height ratio, or null when malformed.
+private fun parseAspectRatio(value: String): Float? {
+    val parts = value.split('x', 'X', ':', '×')
+    if (parts.size != 2) return null
+    val width = parts[0].trim().toFloatOrNull() ?: return null
+    val height = parts[1].trim().toFloatOrNull() ?: return null
+    return if (width > 0f && height > 0f) width / height else null
+}
+
 /**
  * A simple wrapper for SharedPreferences that makes reading preference a little bit easier.
  *
@@ -2536,6 +2552,58 @@ class Settings(
         key = appContext.getPreferenceKey(R.string.pref_key_show_homepage_weather_widget),
         default = true,
     )
+
+    /**
+     * Indicates if the Homepage Crossword Widget is enabled.
+     */
+    var enableHomepageCrosswordWidget by booleanPreference(
+        key = appContext.getPreferenceKey(R.string.pref_key_enable_homepage_crossword_widget),
+        default = true,
+    )
+
+    /**
+     * Indicates if the Homepage Crossword Widget should be visible on the homepage.
+     * This is the user-controlled visibility toggle, independent of the
+     * [enableHomepageCrosswordWidget] feature flag.
+     */
+    var showHomepageCrosswordWidget by booleanPreference(
+        key = appContext.getPreferenceKey(R.string.pref_key_show_homepage_crossword_widget),
+        default = true,
+    )
+
+    /**
+     * Persisted, debug-editable URL for the Homepage Crossword Widget, set from the secret settings
+     * menu. Blank means "use the default"; read the effective value through [crosswordWidgetEndpoint].
+     */
+    var crosswordWidgetEndpointOverride by stringPreference(
+        key = appContext.getPreferenceKey(R.string.pref_key_crossword_widget_url),
+        default = "",
+    )
+
+    /**
+     * URL of the crossword bundle rendered in the Homepage Crossword Widget's GeckoView. Uses the
+     * value set from the secret settings menu, or [CROSSWORD_WIDGET_DEFAULT_URL] when left blank.
+     */
+    val crosswordWidgetEndpoint: String
+        get() = crosswordWidgetEndpointOverride.ifBlank { CROSSWORD_WIDGET_DEFAULT_URL }
+
+    /**
+     * Persisted, debug-editable aspect ratio ("WxH") for the Homepage Crossword Widget's web view,
+     * set from the secret settings menu. Blank/invalid means "use the default"; read the effective
+     * ratio through [crosswordWidgetAspectRatio].
+     */
+    var crosswordWidgetAspectRatioOverride by stringPreference(
+        key = appContext.getPreferenceKey(R.string.pref_key_crossword_widget_aspect_ratio),
+        default = "",
+    )
+
+    /**
+     * Width-to-height ratio the Homepage Crossword Widget card is sized to. Uses the value set from
+     * the secret settings menu, or [CROSSWORD_WIDGET_DEFAULT_ASPECT_RATIO] when unset/invalid.
+     */
+    val crosswordWidgetAspectRatio: Float
+        get() = parseAspectRatio(crosswordWidgetAspectRatioOverride)
+            ?: CROSSWORD_WIDGET_DEFAULT_ASPECT_RATIO
 
     /**
      * Adjust Activated User sent

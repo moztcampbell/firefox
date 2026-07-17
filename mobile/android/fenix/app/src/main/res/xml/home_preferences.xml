@@ -32,6 +32,10 @@
         android:title="@string/customize_toggle_jump_back_in" />
 
     <androidx.preference.SwitchPreferenceCompat
+        android:key="@string/pref_key_show_homepage_crossword_widget"
+        android:title="@string/customize_toggle_crossword" />
+
+    <androidx.preference.SwitchPreferenceCompat
         android:key="@string/pref_key_customization_bookmarks"
         android:title="@string/customize_toggle_bookmarks" />
 

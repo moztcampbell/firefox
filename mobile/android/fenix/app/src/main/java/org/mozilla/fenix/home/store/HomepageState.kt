@@ -77,6 +77,9 @@ internal sealed class HomepageState {
      * @property longfoxEnabled Whether the longfox game is enabled.
      * @property showLongfoxAnimation Whether to play the fox peek animation on the privacy report card.
      * @property trackersBlockedCount The number of trackers blocked for the privacy report.
+     * @property showCrosswordWidget Whether to show the crossword widget on the homepage.
+     * @property crosswordEndpoint The endpoint URL rendered inside the crossword widget's GeckoView.
+     * @property crosswordAspectRatio Width-to-height ratio the crossword widget card is sized to.
      * @property headerState State related to the header of the homepage.
      * @property middleSearchState State of the middle search bar on the homepage.
      * @property firstFrameDrawn Flag indicating whether the first frame of the homescreen has been drawn.
@@ -99,6 +102,9 @@ internal sealed class HomepageState {
         val longfoxEnabled: Boolean,
         val showLongfoxAnimation: Boolean,
         val trackersBlockedCount: Int,
+        val showCrosswordWidget: Boolean,
+        val crosswordEndpoint: String,
+        val crosswordAspectRatio: Float,
         override val headerState: HeaderState,
         val middleSearchState: MiddleSearchState = MiddleSearchState(),
         override val firstFrameDrawn: Boolean = false,
@@ -219,6 +225,10 @@ internal sealed class HomepageState {
                 longfoxEnabled = settings.longfoxEnabled,
                 showLongfoxAnimation = settings.longfoxEnabled && longfoxEntryPointReady,
                 trackersBlockedCount = blockedTrackersState.trackersBlockedCount,
+                showCrosswordWidget = settings.enableHomepageCrosswordWidget &&
+                    settings.showHomepageCrosswordWidget,
+                crosswordEndpoint = settings.crosswordWidgetEndpoint,
+                crosswordAspectRatio = settings.crosswordWidgetAspectRatio,
                 headerState = buildHeaderState(settings = settings),
                 middleSearchState = MiddleSearchState(
                     searchBarVisible = shouldShowSearchBar(appState = appState),

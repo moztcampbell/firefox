@@ -9,9 +9,13 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -29,6 +33,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -40,13 +46,16 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mozilla.components.support.ktx.android.net.hostWithoutCommonPrefixes
 import mozilla.telemetry.glean.private.NoExtras
+import org.mozilla.fenix.BrowserDirection
 import org.mozilla.fenix.GleanMetrics.History
 import org.mozilla.fenix.GleanMetrics.HomeBookmarks
 import org.mozilla.fenix.GleanMetrics.RecentlyVisitedHomepage
+import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.appstate.AppAction
@@ -96,6 +105,7 @@ import org.mozilla.fenix.home.topsites.store.toPopularSite
 import org.mozilla.fenix.home.topsites.ui.AddShortcutBottomSheet
 import org.mozilla.fenix.home.topsites.ui.AddShortcutDialog
 import org.mozilla.fenix.home.ui.HomepageTestTag.HOMEPAGE
+import org.mozilla.fenix.home.webwidget.ui.WebWidget
 import org.mozilla.fenix.theme.FirefoxTheme
 import org.mozilla.fenix.theme.Theme
 import org.mozilla.fenix.trackingprotection.TrackersBlockedCard
@@ -112,6 +122,7 @@ private const val POPULAR_SITES_TO_SHOW = 8
  * @param onTopSitesItemBound Invoked during the composition of a top site item.
  * @param modifier [Modifier] to be applied to the layout.
  */
+@OptIn(ExperimentalLayoutApi::class) // for WindowInsets.isImeVisible
 @Suppress("LongMethod", "CyclomaticComplexMethod", "CognitiveComplexMethod")
 @Composable
 internal fun Homepage(
@@ -123,6 +134,30 @@ internal fun Homepage(
     val scrollState = rememberScrollState()
     val browsingModeChanged = interactor::onPrivateModeButtonClicked
     var shortcutsDialogState by remember { mutableStateOf<DialogState>(DialogState.Closed) }
+
+    // When the crossword widget's content focuses an input and pops the keyboard, center the card in
+    // the space left between the toolbar and the keyboard. The Scaffold hosting this homepage applies
+    // imePadding(), so the scrolling column ([homeViewportHeightPx]) already shrinks to that remaining
+    // space; centering is then just scrolling the card to its middle.
+    var crosswordCardTopY by remember { mutableStateOf(0f) }
+    var crosswordCardHeightPx by remember { mutableStateOf(0) }
+    var homeViewportTopY by remember { mutableStateOf(0f) }
+    var homeViewportHeightPx by remember { mutableStateOf(0) }
+    var crosswordContentFocused by remember { mutableStateOf(false) }
+    val imeVisible = WindowInsets.isImeVisible
+
+    LaunchedEffect(crosswordContentFocused, imeVisible, homeViewportHeightPx) {
+        if (crosswordContentFocused && imeVisible &&
+            homeViewportHeightPx > 0 && crosswordCardHeightPx > 0
+        ) {
+            val cardTopInContent =
+                crosswordCardTopY - homeViewportTopY + scrollState.value
+            val centeredTop = (homeViewportHeightPx - crosswordCardHeightPx) / 2f
+            val target = (cardTopInContent - centeredTop).roundToInt()
+                .coerceIn(0, scrollState.maxValue)
+            scrollState.animateScrollTo(target)
+        }
+    }
 
     BoxWithConstraints(
         modifier = modifier
@@ -143,7 +178,11 @@ internal fun Homepage(
                         }
                     }
                 }
-                .verticalScroll(scrollState),
+                .verticalScroll(scrollState)
+                .onGloballyPositioned { coordinates ->
+                    homeViewportTopY = coordinates.positionInWindow().y
+                    homeViewportHeightPx = coordinates.size.height
+                },
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             if (state is HomepageState.Normal) {
@@ -235,6 +274,29 @@ internal fun Homepage(
                                     modifier = Modifier.padding(top = 16.dp),
                                     longfoxEnabled = longfoxEnabled,
                                     showLongfoxAnimation = showLongfoxAnimation,
+                                )
+                            }
+
+                            if (showCrosswordWidget) {
+                                Spacer(modifier = Modifier.height(40.dp))
+                                val activity = LocalContext.current as? HomeActivity
+                                val fenixBrowserUseCases = components.useCases.fenixBrowserUseCases
+                                WebWidget(
+                                    url = crosswordEndpoint,
+                                    title = "Daily crossword",
+                                    aspectRatio = crosswordAspectRatio,
+                                    modifier = Modifier.onGloballyPositioned { coordinates ->
+                                        crosswordCardTopY = coordinates.positionInWindow().y
+                                        crosswordCardHeightPx = coordinates.size.height
+                                    },
+                                    onContentFocusChanged = { crosswordContentFocused = it },
+                                    onOpenLinkInNewTab = { linkUrl ->
+                                        activity?.openToBrowser(BrowserDirection.FromHome)
+                                        fenixBrowserUseCases.loadUrlOrSearch(
+                                            searchTermOrURL = linkUrl,
+                                            newTab = true,
+                                        )
+                                    },
                                 )
                             }
 
@@ -618,6 +680,9 @@ private fun HomepagePreview() {
                     longfoxEnabled = false,
                     showLongfoxAnimation = false,
                     trackersBlockedCount = 754,
+                    showCrosswordWidget = false,
+                    crosswordEndpoint = "",
+                    crosswordAspectRatio = 300f / 250f,
                     headerState = HeaderState.Normal,
                     middleSearchState = MiddleSearchState(searchBarVisible = true, searchBarEnabled = false),
                     firstFrameDrawn = true,
@@ -659,6 +724,9 @@ private fun HomepageBannerPreview() {
                     longfoxEnabled = false,
                     showLongfoxAnimation = false,
                     trackersBlockedCount = 754,
+                    showCrosswordWidget = false,
+                    crosswordEndpoint = "",
+                    crosswordAspectRatio = 300f / 250f,
                     headerState = HeaderState.Normal,
                     middleSearchState = MiddleSearchState(searchBarVisible = true, searchBarEnabled = false),
                     firstFrameDrawn = true,
@@ -691,6 +759,9 @@ private fun HomepagePreviewCollections() {
                     longfoxEnabled = false,
                     showLongfoxAnimation = false,
                     trackersBlockedCount = 754,
+                    showCrosswordWidget = false,
+                    crosswordEndpoint = "",
+                    crosswordAspectRatio = 300f / 250f,
                     headerState = HeaderState.Normal,
                     middleSearchState = MiddleSearchState(searchBarVisible = true, searchBarEnabled = false),
                     firstFrameDrawn = true,
@@ -726,6 +797,9 @@ private fun MinimalHomepagePreview() {
                     longfoxEnabled = false,
                     showLongfoxAnimation = false,
                     trackersBlockedCount = 754,
+                    showCrosswordWidget = false,
+                    crosswordEndpoint = "",
+                    crosswordAspectRatio = 300f / 250f,
                     headerState = HeaderState.Normal,
                     firstFrameDrawn = true,
                     setupChecklistState = null,

@@ -958,6 +958,8 @@
     <string name="browser_menu_customize_homepage">Customize homepage</string>
     <!-- Title for the customize home screen section with sponsored shortcuts. -->
     <string name="customize_toggle_contile">Sponsored shortcuts</string>
+    <!-- Title for the customize home screen section that toggles the Homepage crossword widget. -->
+    <string name="customize_toggle_crossword">Crossword</string>
 
     <!-- Wallpapers -->
     <!-- Content description for various wallpapers. %1$s is the name of the wallpaper. -->

@@ -30,6 +30,7 @@ import androidx.navigation.NavDirections
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.recyclerview.widget.RecyclerView
@@ -647,6 +648,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SystemInsetsPaddedFragment 
             preferenceStartProfiler?.isVisible = showSecretDebugMenuThisSession &&
                 (components.core.engine.profiler?.isProfilerActive() != null)
         }
+        setupCrosswordWidgetUrlPreference(settings)
+        setupCrosswordWidgetAspectRatioPreference(settings)
         setupInstallAddonFromFilePreference(settings)
         setLinkSharingPreference()
         setupAmoCollectionOverridePreference(
@@ -766,6 +769,38 @@ class SettingsFragment : PreferenceFragmentCompat(), SystemInsetsPaddedFragment 
                 )
                 true
             }
+    }
+
+    private fun setupCrosswordWidgetUrlPreference(settings: Settings) {
+        // Route the value through Settings so it lands in the fenix_preferences file that the rest of
+        // the app reads; this fragment's PreferenceManager otherwise writes to the default file.
+        findPreference<EditTextPreference>(
+            getPreferenceKey(R.string.pref_key_crossword_widget_url),
+        )?.apply {
+            isVisible = settings.showSecretDebugMenuThisSession
+            isPersistent = false
+            text = settings.crosswordWidgetEndpointOverride
+            onPreferenceChangeListener = Preference.OnPreferenceChangeListener { _, newValue ->
+                settings.crosswordWidgetEndpointOverride = (newValue as? String).orEmpty()
+                true
+            }
+        }
+    }
+
+    private fun setupCrosswordWidgetAspectRatioPreference(settings: Settings) {
+        // Route the value through Settings so it lands in the fenix_preferences file that the rest of
+        // the app reads; this fragment's PreferenceManager otherwise writes to the default file.
+        findPreference<EditTextPreference>(
+            getPreferenceKey(R.string.pref_key_crossword_widget_aspect_ratio),
+        )?.apply {
+            isVisible = settings.showSecretDebugMenuThisSession
+            isPersistent = false
+            text = settings.crosswordWidgetAspectRatioOverride
+            onPreferenceChangeListener = Preference.OnPreferenceChangeListener { _, newValue ->
+                settings.crosswordWidgetAspectRatioOverride = (newValue as? String).orEmpty()
+                true
+            }
+        }
     }
 
     @VisibleForTesting

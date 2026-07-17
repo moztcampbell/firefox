@@ -385,7 +385,9 @@ pref("urlclassifier.malwareTable", "goog-harmful-proto,goog-unwanted-proto,mozte
 pref("webextensions.storage.sync.kinto", true);
 
 // Require extensions to be signed (bug 1244329)
-pref("xpinstall.signatures.required", true);
+// Disabled locally to allow installing unsigned extensions from files. Only honored in non-release
+// builds (release forces signing via MOZ_REQUIRE_SIGNING); do not land this change.
+pref("xpinstall.signatures.required", false);
 
 pref("xpinstall.whitelist.add", "https://addons.mozilla.org");
 pref("xpinstall.whitelist.fileRequest", false);

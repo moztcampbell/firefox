@@ -74,6 +74,10 @@
     <string name="preferences_debug_settings_custom_glean_server_url" translatable="false">Custom Glean server URL (requires restart)</string>
     <!-- Title of preference for sync debugging (only shown in the when the secret debug menu is enabled) -->
     <string name="preferences_sync_debug">Sync Debug</string>
+    <!-- Title of preference to override the crossword web widget URL (only shown when the secret debug menu is enabled) -->
+    <string name="preferences_crossword_widget_url" translatable="false">Crossword widget URL</string>
+    <!-- Title of preference to override the crossword web widget aspect ratio (only shown when the secret debug menu is enabled) -->
+    <string name="preferences_crossword_widget_aspect_ratio" translatable="false">Crossword widget aspect ratio (WxH)</string>
     <!-- Preference to override the Push server -->
     <string name="preferences_override_push_server">Custom Push server</string>
     <!-- Preference to use the experimental React (The web framework) Mozilla Account page, used only in testing -->

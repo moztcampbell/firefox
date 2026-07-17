@@ -34,6 +34,20 @@
         android:title="@string/preferences_sync_debug"
         app:isPreferenceVisible="false" />
 
+    <androidx.preference.EditTextPreference
+        app:iconSpaceReserved="false"
+        android:key="@string/pref_key_crossword_widget_url"
+        android:title="@string/preferences_crossword_widget_url"
+        app:isPreferenceVisible="false"
+        app:useSimpleSummaryProvider="true" />
+
+    <androidx.preference.EditTextPreference
+        app:iconSpaceReserved="false"
+        android:key="@string/pref_key_crossword_widget_aspect_ratio"
+        android:title="@string/preferences_crossword_widget_aspect_ratio"
+        app:isPreferenceVisible="false"
+        app:useSimpleSummaryProvider="true" />
+
     <androidx.preference.PreferenceCategory
         android:title="@string/preferences_category_general"
         android:layout="@layout/preference_category_no_icon_style">

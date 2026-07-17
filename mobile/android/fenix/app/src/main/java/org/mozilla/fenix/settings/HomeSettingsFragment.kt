@@ -156,6 +156,7 @@ class HomeSettingsFragment : PreferenceFragmentCompat(), SystemInsetsPaddedFragm
 
         setupOpeningScreenPreferences()
         setupWeatherPreference()
+        setupCrosswordWidgetPreferences()
     }
 
     private fun createMetricPreferenceChangeListener(
@@ -213,6 +214,16 @@ class HomeSettingsFragment : PreferenceFragmentCompat(), SystemInsetsPaddedFragm
             isVisible = fenixSettings.enableHomepageWeatherWidget
             isChecked = fenixSettings.showHomepageWeatherWidget
             onPreferenceChangeListener = createMetricPreferenceChangeListener("weather")
+        }
+    }
+
+    private fun setupCrosswordWidgetPreferences() {
+        requirePreference<SwitchPreferenceCompat>(R.string.pref_key_show_homepage_crossword_widget).apply {
+            // Only offer the toggle when the crossword feature is enabled; otherwise the widget
+            // is unavailable and the toggle would have nothing to control.
+            isVisible = fenixSettings.enableHomepageCrosswordWidget
+            isChecked = fenixSettings.showHomepageCrosswordWidget
+            onPreferenceChangeListener = createMetricPreferenceChangeListener("crossword")
         }
     }
 }
