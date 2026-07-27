@@ -388,10 +388,10 @@ class PrivateBrowsingLockFeatureTest {
     }
 
     @Test
-    fun `GIVEN the feature is on and there are private tabs and we are in a custom tab WHEN we click on Open in Firefox THEN we don't lock PBM`() {
+    fun `GIVEN the feature is on and there are private tabs and we are in a private custom tab WHEN we click on Open in Firefox THEN we don't lock PBM`() {
         val isFeatureEnabled = true
 
-        val appStore = AppStore(initialState = AppState(openInFirefoxRequested = false))
+        val appStore = AppStore(initialState = AppState(mode = BrowsingMode.Private, openInFirefoxRequested = false))
         val browserStore = createBrowserStore(mixedTabs)
         val feature = createFeature(appStore, browserStore, createStorage(isFeatureEnabled))
 
