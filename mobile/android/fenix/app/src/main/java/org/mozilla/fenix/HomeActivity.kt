@@ -1484,7 +1484,11 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
                     themeManager.currentTheme = newMode
                 }
 
-                components.appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = newMode))
+                // Custom tabs run in their own activity but share the process-wide AppStore. Don't let
+                // a custom tab's mode clobber the shared browsing mode owned by the main browser windows.
+                if (this !is ExternalAppBrowserActivity) {
+                    components.appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = newMode))
+                }
             },
         )
     }

@@ -525,6 +525,7 @@ abstract class BaseBrowserFragment :
         val openInFenixIntent = Intent(context, IntentReceiverActivity::class.java).apply {
             action = Intent.ACTION_VIEW
             putExtra(HomeActivity.OPEN_TO_BROWSER, true)
+            putExtra(HomeActivity.PRIVATE_BROWSING_MODE, tab.content.private)
         }
 
         val readerMenuController = DefaultReaderModeController(

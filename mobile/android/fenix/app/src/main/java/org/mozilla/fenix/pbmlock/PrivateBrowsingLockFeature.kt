@@ -265,6 +265,19 @@ class PrivateBrowsingLockFeature(
         storage.startObservingSharedPrefs()
     }
 
+    override fun onDestroy(owner: LifecycleOwner) {
+        super.onDestroy(owner)
+
+        // Cancel the store observers when this activity is destroyed. Otherwise a destroyed
+        // activity's feature keeps observing the shared AppStore and can re-lock private mode
+        // from the background.
+        browserStoreScope?.cancel()
+        browserStoreScope = null
+
+        appStoreScope?.cancel()
+        appStoreScope = null
+    }
+
     private fun maybeLockPrivateMode() {
         // When the app gets inactive with opened tabs, we lock the private mode.
         if (browserStore.state.privateTabs.isNotEmpty()) {
