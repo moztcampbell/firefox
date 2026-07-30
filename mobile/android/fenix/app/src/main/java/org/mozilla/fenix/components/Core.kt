@@ -123,6 +123,7 @@ import org.mozilla.fenix.gecko.GeckoProvider
 import org.mozilla.fenix.historymetadata.DefaultHistoryMetadataService
 import org.mozilla.fenix.historymetadata.HistoryMetadataMiddleware
 import org.mozilla.fenix.historymetadata.HistoryMetadataService
+import org.mozilla.fenix.home.webwidget.WebWidgetExtension
 import org.mozilla.fenix.longfox.LongFoxFeature
 import org.mozilla.fenix.media.MediaSessionService
 import org.mozilla.fenix.nimbus.FxNimbus
@@ -264,6 +265,7 @@ class Core(
             runtime = geckoRuntime,
         ).also {
             WebCompatFeature.install(it)
+            WebWidgetExtension.install(it)
         }
     }
 

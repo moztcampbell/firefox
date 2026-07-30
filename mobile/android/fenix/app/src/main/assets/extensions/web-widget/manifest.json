@@ -1,0 +1,18 @@
+{
+  "manifest_version": 2,
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "webwidget@mozac.org"
+    }
+  },
+  "name": "Fenix Web Widget",
+  "version": "1.0",
+  "permissions": [
+    "mozillaAddons",
+    "geckoViewAddons"
+  ],
+  "options_ui": {
+    "page": "widget.html",
+    "open_in_tab": true
+  }
+}

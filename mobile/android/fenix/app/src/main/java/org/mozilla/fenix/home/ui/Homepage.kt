@@ -24,6 +24,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -105,6 +106,7 @@ import org.mozilla.fenix.home.topsites.store.toPopularSite
 import org.mozilla.fenix.home.topsites.ui.AddShortcutBottomSheet
 import org.mozilla.fenix.home.topsites.ui.AddShortcutDialog
 import org.mozilla.fenix.home.ui.HomepageTestTag.HOMEPAGE
+import org.mozilla.fenix.home.webwidget.WebWidgetExtension
 import org.mozilla.fenix.home.webwidget.ui.WebWidget
 import org.mozilla.fenix.theme.FirefoxTheme
 import org.mozilla.fenix.theme.Theme
@@ -144,6 +146,9 @@ internal fun Homepage(
     var homeViewportTopY by remember { mutableStateOf(0f) }
     var homeViewportHeightPx by remember { mutableStateOf(0) }
     var crosswordContentFocused by remember { mutableStateOf(false) }
+    var webWidgetCardTopY by remember { mutableStateOf(0f) }
+    var webWidgetCardHeightPx by remember { mutableStateOf(0) }
+    var webWidgetContentFocused by remember { mutableStateOf(false) }
     val imeVisible = WindowInsets.isImeVisible
 
     LaunchedEffect(crosswordContentFocused, imeVisible, homeViewportHeightPx) {
@@ -153,6 +158,19 @@ internal fun Homepage(
             val cardTopInContent =
                 crosswordCardTopY - homeViewportTopY + scrollState.value
             val centeredTop = (homeViewportHeightPx - crosswordCardHeightPx) / 2f
+            val target = (cardTopInContent - centeredTop).roundToInt()
+                .coerceIn(0, scrollState.maxValue)
+            scrollState.animateScrollTo(target)
+        }
+    }
+
+    LaunchedEffect(webWidgetContentFocused, imeVisible, homeViewportHeightPx) {
+        if (webWidgetContentFocused && imeVisible &&
+            homeViewportHeightPx > 0 && webWidgetCardHeightPx > 0
+        ) {
+            val cardTopInContent =
+                webWidgetCardTopY - homeViewportTopY + scrollState.value
+            val centeredTop = (homeViewportHeightPx - webWidgetCardHeightPx) / 2f
             val target = (cardTopInContent - centeredTop).roundToInt()
                 .coerceIn(0, scrollState.maxValue)
             scrollState.animateScrollTo(target)
@@ -290,6 +308,30 @@ internal fun Homepage(
                                         crosswordCardHeightPx = coordinates.size.height
                                     },
                                     onContentFocusChanged = { crosswordContentFocused = it },
+                                    onOpenLinkInNewTab = { linkUrl ->
+                                        activity?.openToBrowser(BrowserDirection.FromHome)
+                                        fenixBrowserUseCases.loadUrlOrSearch(
+                                            searchTermOrURL = linkUrl,
+                                            newTab = true,
+                                        )
+                                    },
+                                )
+                            }
+
+                            val webWidgetExtensionUrl by WebWidgetExtension.widgetUrl.collectAsState()
+                            webWidgetExtensionUrl?.takeIf { it.isNotBlank() }?.let { extensionUrl ->
+                                Spacer(modifier = Modifier.height(40.dp))
+                                val activity = LocalContext.current as? HomeActivity
+                                val fenixBrowserUseCases = components.useCases.fenixBrowserUseCases
+                                WebWidget(
+                                    url = extensionUrl,
+                                    title = "Web widget",
+                                    aspectRatio = crosswordAspectRatio,
+                                    modifier = Modifier.onGloballyPositioned { coordinates ->
+                                        webWidgetCardTopY = coordinates.positionInWindow().y
+                                        webWidgetCardHeightPx = coordinates.size.height
+                                    },
+                                    onContentFocusChanged = { webWidgetContentFocused = it },
                                     onOpenLinkInNewTab = { linkUrl ->
                                         activity?.openToBrowser(BrowserDirection.FromHome)
                                         fenixBrowserUseCases.loadUrlOrSearch(
